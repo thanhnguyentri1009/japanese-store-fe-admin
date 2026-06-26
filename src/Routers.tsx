@@ -1,12 +1,12 @@
 import { Route, Routes } from 'react-router-dom'
 import type { ReactElement } from 'react'
 import { routers } from './commons/constants/routers'
-import Dashboard from './pages/Dashboard'
-import Products from './pages/Products'
-import Orders from './pages/Orders'
-import Users from './pages/Users'
-import Login from './pages/Login'
-import NotFound from './pages/NotFound'
+import Dashboard from './pages/Dashboard/Dashboard'
+import Products from './pages/Products/Products'
+import Orders from './pages/Orders/Orders'
+import Users from './pages/Users/Users'
+import Login from './pages/Login/Login'
+import NotFound from './pages/NotFound/NotFound'
 
 interface AppRoute {
   key: string
@@ -22,7 +22,7 @@ const routes: AppRoute[] = [
 ]
 
 export default function Routers() {
-  return (
+  return ( 
     <>
       <Routes>
         {/* Unauthorize routes */}

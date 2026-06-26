@@ -43,7 +43,11 @@ export default function AdminLayout({ children }: Props) {
         trigger={null}
         collapsible
         collapsed={collapsed}
-        style={{ background: token.colorBgContainer }}
+        width={240}
+        style={{
+          background: token.colorBgContainer,
+          borderRight: `1px solid ${token.colorBorderSecondary}`,
+        }}
       >
         <div
           style={{
@@ -62,7 +66,7 @@ export default function AdminLayout({ children }: Props) {
           mode="inline"
           selectedKeys={[location.pathname]}
           items={menuItems}
-          style={{ borderRight: 0, marginTop: 8 }}
+          style={{ borderRight: 0, marginTop: 8, fontSize: 16 }}
           onClick={({ key }) => navigate(key)}
         />
       </Sider>

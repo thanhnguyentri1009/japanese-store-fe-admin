@@ -7,10 +7,12 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
+    "format": "prettier --write \"src/**/*.{ts,tsx,json}\"",
     "preview": "vite preview"
   },
   "dependencies": {
     "@ant-design/icons": "^6.2.5",
+    "@tanstack/react-query": "^5.101.1",
     "antd": "^6.4.5",
     "axios": "^1.18.1",
     "lodash": "^4.18.1",
@@ -25,6 +27,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
     "oxlint": "^1.69.0",
+    "prettier": "^3.8.4",
     "typescript": "~6.0.2",
     "vite": "^8.1.0"
   }
