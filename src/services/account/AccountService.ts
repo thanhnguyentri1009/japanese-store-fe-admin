@@ -1,0 +1,31 @@
+import defaultAxios from '../axios'
+import type { Account, CreateAccountRequest, UpdateAccountRequest } from '../../types/account'
+import type { ListParams } from '../../types/common'
+import { apiUrls } from '../../commons/constants/apiIUrl'
+
+type ListResponse = Account[] | { data: Account[]; total?: number }
+
+export const getAccounts = async (params?: ListParams): Promise<{ data: Account[]; total: number }> => {
+  const res = await defaultAxios.get<ListResponse>(apiUrls.accounts.list, { params })
+  if (Array.isArray(res.data)) return { data: res.data, total: res.data.length }
+  return { data: res.data?.data ?? [], total: res.data?.total ?? 0 }
+}
+
+export const getAccountById = async (id: string): Promise<Account> => {
+  const res = await defaultAxios.get<Account>(apiUrls.accounts.detail(id))
+  return res.data
+}
+
+export const createAccount = async (data: CreateAccountRequest): Promise<Account> => {
+  const res = await defaultAxios.post<Account>(apiUrls.accounts.create, data)
+  return res.data
+}
+
+export const updateAccount = async (id: string, data: UpdateAccountRequest): Promise<Account> => {
+  const res = await defaultAxios.patch<Account>(apiUrls.accounts.update(id), data)
+  return res.data
+}
+
+export const deleteAccount = async (id: string): Promise<void> => {
+  await defaultAxios.delete(apiUrls.accounts.delete(id))
+}

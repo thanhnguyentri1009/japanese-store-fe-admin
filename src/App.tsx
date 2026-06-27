@@ -1,7 +1,9 @@
 import { BrowserRouter } from 'react-router-dom'
 import { ConfigProvider, theme } from 'antd'
-import viVN from 'antd/locale/vi_VN'
+import enUS from 'antd/locale/en_US'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 import AppContainer from './AppContainer'
 import Routers from './Routers'
 
@@ -11,15 +13,16 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ConfigProvider
-        locale={viVN}
+        locale={enUS}
         theme={{
           algorithm: theme.defaultAlgorithm,
           token: {
-            colorPrimary: '#e63946',
+            colorPrimary: '#8B5E3C',
             borderRadius: 8,
           },
         }}
       >
+        <ToastContainer position="top-center" autoClose={3000} />
         <BrowserRouter>
           <AppContainer>
             <Routers />

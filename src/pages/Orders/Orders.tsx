@@ -1,44 +1,114 @@
-import { Table, Typography, Tag } from 'antd'
+import { useState } from 'react'
+import { Button, Table, Tag, Typography } from 'antd'
+import { PlusOutlined } from '@ant-design/icons'
 import type { TableProps } from 'antd'
+import type { Order, OrderStatus } from '../../types/order'
+import { apiUrls } from '../../commons/constants/apiIUrl'
+import useTableFetchList from '../../hooks/useTableFetchList'
+import SearchOrders from './components/SearchOrders'
+import AddOrder from './Modal/AddOrder'
+import OrderDetailModal from './Modal/OrderDetailModal'
 
-interface Order {
-  id: string
-  customer: string
-  total: number
-  status: 'pending' | 'processing' | 'completed' | 'cancelled'
-  date: string
-}
-
-const statusMap = {
+const statusConfig: Record<OrderStatus, { label: string; color: string }> = {
   pending: { label: 'Pending', color: 'gold' },
-  processing: { label: 'Processing', color: 'blue' },
-  completed: { label: 'Completed', color: 'green' },
+  confirmed: { label: 'Confirmed', color: 'blue' },
+  shipping: { label: 'Shipping', color: 'cyan' },
+  delivered: { label: 'Delivered', color: 'green' },
   cancelled: { label: 'Cancelled', color: 'red' },
 }
 
-const mockData: Order[] = [
-  { id: '#ORD-001', customer: 'John Doe', total: 120000, status: 'completed', date: '2026-06-20' },
-  { id: '#ORD-002', customer: 'Jane Smith', total: 85000, status: 'processing', date: '2026-06-22' },
-  { id: '#ORD-003', customer: 'Bob Johnson', total: 250000, status: 'pending', date: '2026-06-24' },
-]
-
 const columns: TableProps<Order>['columns'] = [
-  { title: 'Order ID', dataIndex: 'id' },
-  { title: 'Customer', dataIndex: 'customer' },
-  { title: 'Total', dataIndex: 'total', render: (v) => `₫${v.toLocaleString('en-US')}` },
+  {
+    title: 'Order ID',
+    dataIndex: 'id',
+    render: (v: string) => v.slice(0, 8).toUpperCase(),
+  },
   {
     title: 'Status',
     dataIndex: 'status',
-    render: (v: Order['status']) => <Tag color={statusMap[v].color}>{statusMap[v].label}</Tag>,
+    render: (v: OrderStatus) => {
+      const cfg = statusConfig[v] ?? { label: v, color: 'default' }
+      return <Tag color={cfg.color}>{cfg.label}</Tag>
+    },
   },
-  { title: 'Date', dataIndex: 'date' },
+  {
+    title: 'Total',
+    dataIndex: 'totalAmount',
+    render: (v?: number) => (v != null ? `₫${v.toLocaleString('vi-VN')}` : '-'),
+  },
+  {
+    title: 'Items',
+    dataIndex: 'items',
+    render: (items: Order['items']) => items.length,
+  },
+  {
+    title: 'Payment',
+    render: (_, record) => {
+      const p = record.payment
+      if (!p) return '-'
+      return (
+        <Tag color={p.status === 'paid' ? 'green' : p.status === 'failed' ? 'red' : 'gold'}>
+          {p.status ?? '-'}
+        </Tag>
+      )
+    },
+  },
+  {
+    title: 'Date',
+    dataIndex: 'orderedAt',
+    render: (v: string) => new Date(v).toLocaleDateString('vi-VN'),
+  },
 ]
 
 export default function Orders() {
+  const [openAdd, setOpenAdd] = useState(false)
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [params, setParams] = useState({})
+
+  const { tableData, isLoading, pagination } = useTableFetchList<Order>({
+    queryKey: ['orders'],
+    url: apiUrls.orders.list,
+    params,
+  })
+
   return (
     <>
-      <Typography.Title level={4} style={{ marginBottom: 16 }}>Orders</Typography.Title>
-      <Table columns={columns} dataSource={mockData} rowKey="id" />
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 16,
+        }}
+      >
+        <Typography.Title level={4} style={{ margin: 0 }}>
+          Orders
+        </Typography.Title>
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => setOpenAdd(true)}>
+          Add Order
+        </Button>
+      </div>
+
+      <SearchOrders onSearch={(search) => setParams({ search })} />
+      <Table
+        tableLayout="fixed"
+        columns={columns}
+        dataSource={tableData ?? []}
+        rowKey="id"
+        loading={isLoading}
+        pagination={pagination}
+        onRow={(record) => ({
+          onClick: () => setSelectedOrder(record),
+          style: { cursor: 'pointer' },
+        })}
+      />
+
+      <AddOrder open={openAdd} onClose={() => setOpenAdd(false)} />
+      <OrderDetailModal
+        open={!!selectedOrder}
+        order={selectedOrder}
+        onClose={() => setSelectedOrder(null)}
+      />
     </>
   )
 }

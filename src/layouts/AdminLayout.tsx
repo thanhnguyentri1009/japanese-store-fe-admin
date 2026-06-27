@@ -10,6 +10,12 @@ import {
   MenuUnfoldOutlined,
   UserOutlined,
   LogoutOutlined,
+  TagsOutlined,
+  ShopOutlined,
+  EnvironmentOutlined,
+  CreditCardOutlined,
+  UnorderedListOutlined,
+  SafetyOutlined,
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import type { ReactNode } from 'react'
@@ -18,9 +24,36 @@ const { Header, Sider, Content } = Layout
 
 const menuItems: MenuProps['items'] = [
   { key: '/dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
-  { key: '/products', icon: <AppstoreOutlined />, label: 'Products' },
-  { key: '/orders', icon: <ShoppingCartOutlined />, label: 'Orders' },
-  { key: '/users', icon: <TeamOutlined />, label: 'Users' },
+  {
+    key: 'catalog',
+    icon: <AppstoreOutlined />,
+    label: 'Catalog',
+    children: [
+      { key: '/products', icon: <ShopOutlined />, label: 'Products' },
+      { key: '/categories', icon: <TagsOutlined />, label: 'Categories' },
+      { key: '/brands', icon: <SafetyOutlined />, label: 'Brands' },
+    ],
+  },
+  {
+    key: 'sales',
+    icon: <ShoppingCartOutlined />,
+    label: 'Sales',
+    children: [
+      { key: '/orders', icon: <UnorderedListOutlined />, label: 'Orders' },
+      { key: '/payments', icon: <CreditCardOutlined />, label: 'Payments' },
+    ],
+  },
+  { key: '/customers', icon: <TeamOutlined />, label: 'Customers' },
+  { key: '/addresses', icon: <EnvironmentOutlined />, label: 'Addresses' },
+  {
+    key: 'system',
+    icon: <UserOutlined />,
+    label: 'System',
+    children: [
+      { key: '/accounts', icon: <UserOutlined />, label: 'Accounts' },
+      { key: '/roles', icon: <SafetyOutlined />, label: 'Roles' },
+    ],
+  },
 ]
 
 const userMenuItems: MenuProps['items'] = [
@@ -65,6 +98,7 @@ export default function AdminLayout({ children }: Props) {
         <Menu
           mode="inline"
           selectedKeys={[location.pathname]}
+          defaultOpenKeys={['catalog', 'sales', 'system']}
           items={menuItems}
           style={{ borderRight: 0, marginTop: 8, fontSize: 16 }}
           onClick={({ key }) => navigate(key)}
