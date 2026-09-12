@@ -1,11 +1,12 @@
-import { Form, DatePicker, Select } from 'antd'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect } from 'react'
+import { DatePicker, Descriptions, Form, Select } from 'antd'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
+import dayjs from 'dayjs'
 import CustomModal from '../../../commons/components/CustomModal/CustomModal'
 import CustomInput from '../../../commons/components/CustomInput/CustomInput'
-import { createPayment } from '../../../services/payment/PaymentService'
-import { getOrders } from '../../../services/order/OrderService'
-import type { PaymentMethod, PaymentStatus } from '../../../types/payment'
+import { updatePayment } from '../../../services/payment/PaymentService'
+import type { Payment, PaymentMethod, PaymentStatus, UpdatePaymentRequest } from '../../../types/payment'
 
 const methodLabel: Record<PaymentMethod, string> = {
   cod: 'COD',
@@ -30,67 +31,61 @@ const statusOptions = (Object.keys(statusConfig) as PaymentStatus[]).map((k) => 
   label: statusConfig[k],
 }))
 
-interface AddPaymentProps {
+interface PaymentDetailModalProps {
   open: boolean
+  payment: Payment | null
   onClose: () => void
 }
 
-export default function AddPayment({ open, onClose }: AddPaymentProps) {
+export default function PaymentDetailModal({ open, payment, onClose }: PaymentDetailModalProps) {
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
 
-  const { data: ordersData } = useQuery({
-    queryKey: ['orders'],
-    queryFn: () => getOrders(),
-  })
+  useEffect(() => {
+    if (payment) {
+      form.setFieldsValue({
+        method: payment.method,
+        status: payment.status,
+        amount: payment.amount,
+        paidAt: payment.paidAt ? dayjs(payment.paidAt) : undefined,
+      })
+    }
+  }, [payment, form])
 
   const { mutate, isPending } = useMutation({
-    mutationFn: createPayment,
+    mutationFn: (values: UpdatePaymentRequest) => updatePayment(payment!.id, values),
     onSuccess: () => {
-      toast.success('Payment created')
-      form.resetFields()
+      toast.success('Payment updated')
       onClose()
       queryClient.invalidateQueries({ queryKey: ['payments'] })
     },
     onError: () => {
-      toast.error('Failed to create payment')
+      toast.error('Failed to update payment')
     },
   })
 
-  const handleCancel = () => {
-    form.resetFields()
-    onClose()
-  }
+  if (!payment) return null
 
   return (
     <CustomModal
-      title="Add Payment"
+      title="Payment Detail"
       open={open}
       onOk={() => form.submit()}
-      onCancel={handleCancel}
+      onCancel={onClose}
       confirmLoading={isPending}
     >
+      <Descriptions column={1} size="small" style={{ marginBottom: 16 }}>
+        <Descriptions.Item label="ID">{payment.id}</Descriptions.Item>
+        <Descriptions.Item label="Order ID">
+          {payment.orderId ? payment.orderId.slice(0, 8).toUpperCase() : '-'}
+        </Descriptions.Item>
+      </Descriptions>
+
       <Form
         form={form}
         layout="vertical"
         onFinish={(values) => mutate({ ...values, paidAt: values.paidAt?.toISOString() })}
-        style={{ marginTop: 16 }}
       >
-        <Form.Item name="orderId" label="Order" rules={[{ required: true, message: 'Please select order' }]}>
-          <Select
-            showSearch
-            placeholder="Select order"
-            filterOption={(input, opt) =>
-              String(opt?.label ?? '').toLowerCase().includes(input.toLowerCase())
-            }
-            options={
-              ordersData?.data.map((o) => ({
-                value: o.id,
-                label: `${o.id.slice(0, 8).toUpperCase()} — ${o.status}`,
-              })) ?? []
-            }
-          />
-        </Form.Item>
         <Form.Item name="method" label="Payment Method">
           <Select placeholder="Select method" allowClear options={methodOptions} />
         </Form.Item>

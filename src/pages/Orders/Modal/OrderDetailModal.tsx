@@ -1,6 +1,13 @@
-import { Modal, Table, Tag, Descriptions } from 'antd'
+import { useEffect } from 'react'
+import { Descriptions, Form, Modal, Select, Table, Tag } from 'antd'
 import type { TableProps } from 'antd'
-import type { Order, OrderStatus, OrderItemSummary } from '../../../types/order'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'react-toastify'
+import type { Order, OrderStatus, OrderItemSummary, UpdateOrderRequest } from '../../../types/order'
+import { formatMoney } from '../../../utils/formatMoney'
+import { updateOrder } from '../../../services/order/OrderService'
+import { getAddresses } from '../../../services/address/AddressService'
+import CustomInput from '../../../commons/components/CustomInput/CustomInput'
 
 const statusConfig: Record<OrderStatus, { label: string; color: string }> = {
   pending: { label: 'Pending', color: 'gold' },
@@ -9,6 +16,11 @@ const statusConfig: Record<OrderStatus, { label: string; color: string }> = {
   delivered: { label: 'Delivered', color: 'green' },
   cancelled: { label: 'Cancelled', color: 'red' },
 }
+
+const statusOptions = (Object.keys(statusConfig) as OrderStatus[]).map((k) => ({
+  value: k,
+  label: statusConfig[k].label,
+}))
 
 const itemColumns: TableProps<OrderItemSummary>['columns'] = [
   {
@@ -20,12 +32,12 @@ const itemColumns: TableProps<OrderItemSummary>['columns'] = [
     title: 'Unit Price',
     dataIndex: 'unitPrice',
     width: 130,
-    render: (v: number) => `₫${v.toLocaleString('vi-VN')}`,
+    render: (v: number) => formatMoney(v),
   },
   {
     title: 'Subtotal',
     width: 130,
-    render: (_, record) => `₫${(record.quantity * record.unitPrice).toLocaleString('vi-VN')}`,
+    render: (_, record) => formatMoney(record.quantity * record.unitPrice),
   },
 ]
 
@@ -36,6 +48,36 @@ interface Props {
 }
 
 export default function OrderDetailModal({ open, order, onClose }: Props) {
+  const [form] = Form.useForm()
+  const queryClient = useQueryClient()
+
+  const { data: addressesData } = useQuery({
+    queryKey: ['addresses'],
+    queryFn: () => getAddresses(),
+  })
+
+  useEffect(() => {
+    if (order) {
+      form.setFieldsValue({
+        status: order.status,
+        addressId: order.addressId,
+        totalAmount: order.totalAmount,
+      })
+    }
+  }, [order, form])
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: (values: UpdateOrderRequest) => updateOrder(order!.id, values),
+    onSuccess: () => {
+      toast.success('Order updated')
+      onClose()
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
+    },
+    onError: () => {
+      toast.error('Failed to update order')
+    },
+  })
+
   if (!order) return null
 
   const statusCfg = statusConfig[order.status] ?? { label: order.status, color: 'default' }
@@ -44,16 +86,14 @@ export default function OrderDetailModal({ open, order, onClose }: Props) {
     <Modal
       title={`Order #${order.id.slice(0, 8).toUpperCase()}`}
       open={open}
+      onOk={() => form.submit()}
       onCancel={onClose}
-      footer={null}
+      confirmLoading={isPending}
       width={680}
     >
       <Descriptions column={2} bordered size="small" style={{ marginBottom: 24, marginTop: 16 }}>
-        <Descriptions.Item label="Status">
+        <Descriptions.Item label="Current Status">
           <Tag color={statusCfg.color}>{statusCfg.label}</Tag>
-        </Descriptions.Item>
-        <Descriptions.Item label="Total">
-          {order.totalAmount != null ? `₫${order.totalAmount.toLocaleString('vi-VN')}` : '-'}
         </Descriptions.Item>
         <Descriptions.Item label="Date">
           {new Date(order.orderedAt).toLocaleString('vi-VN')}
@@ -90,7 +130,26 @@ export default function OrderDetailModal({ open, order, onClose }: Props) {
         pagination={false}
         size="small"
         title={() => <strong>Items ({order.items.length})</strong>}
+        style={{ marginBottom: 24 }}
       />
+
+      <Form form={form} layout="vertical" onFinish={(values) => mutate(values)}>
+        <Form.Item name="status" label="Status">
+          <Select placeholder="Select status" options={statusOptions} />
+        </Form.Item>
+        <Form.Item name="addressId" label="Address">
+          <Select
+            showSearch
+            allowClear
+            placeholder="Select address"
+            filterOption={(input, opt) =>
+              String(opt?.label ?? '').toLowerCase().includes(input.toLowerCase())
+            }
+            options={addressesData?.data.map((a) => ({ value: a.id, label: `${a.address}, ${a.country}` })) ?? []}
+          />
+        </Form.Item>
+        <CustomInput name="totalAmount" label="Total Amount" type="number" min={0} placeholder="0" />
+      </Form>
     </Modal>
   )
 }

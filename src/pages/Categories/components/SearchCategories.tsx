@@ -1,4 +1,4 @@
-import CustomInput from '../../../commons/components/CustomInput'
+import CustomInput from '../../../commons/components/CustomInput/CustomInput'
 
 interface SearchCategoriesProps {
   onSearch: (value: string) => void

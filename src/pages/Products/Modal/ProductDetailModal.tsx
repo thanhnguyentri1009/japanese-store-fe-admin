@@ -1,5 +1,5 @@
-import { Form, Select, Switch } from 'antd'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { Descriptions, Form, Select, Switch } from 'antd'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import CustomModal from '../../../commons/components/CustomModal/CustomModal'
@@ -11,22 +11,21 @@ import { getCategories } from '../../../services/category/CategoryService'
 import { getBrands } from '../../../services/brand/BrandService'
 import type { Product } from '../../../types/product'
 
-interface AddProductProps {
+interface ProductDetailModalProps {
   open: boolean
+  product: Product | null
   onClose: () => void
 }
 
-export default function AddProduct({ open, onClose }: AddProductProps) {
+export default function ProductDetailModal({ open, product, onClose }: ProductDetailModalProps) {
   const [form] = Form.useForm()
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | undefined>()
-  const [imageError, setImageError] = useState(false)
   const queryClient = useQueryClient()
 
   const handleImageChange = (file: File) => {
     setImageFile(file)
     setImagePreview(URL.createObjectURL(file))
-    setImageError(false)
   }
 
   const handleImageRemove = () => {
@@ -44,6 +43,24 @@ export default function AddProduct({ open, onClose }: AddProductProps) {
     queryFn: () => getBrands(),
   })
 
+  useEffect(() => {
+    if (product) {
+      form.setFieldsValue({
+        name: product.name,
+        categoryId: product.categoryId,
+        brandId: product.brandId,
+        price: product.price,
+        stock: product.detail?.stock,
+        series: product.series,
+        nibType: product.detail?.nibType,
+        inkType: product.detail?.inkType,
+        isActive: product.detail?.isActive ?? true,
+      })
+      setImageFile(null)
+      setImagePreview(product.image)
+    }
+  }, [product, form])
+
   const { mutate, isPending } = useMutation({
     mutationFn: async (values: Record<string, unknown>) => {
       const formData = new FormData()
@@ -51,73 +68,48 @@ export default function AddProduct({ open, onClose }: AddProductProps) {
       Object.entries(values).forEach(([k, v]) => {
         if (v != null) formData.append(k, String(v))
       })
-      const res = await uploadAxios.post<Product>(apiUrls.products.create, formData)
+      const res = await uploadAxios.patch<Product>(apiUrls.products.update(product!.id), formData)
       return res.data
     },
     onSuccess: () => {
-      toast.success('Product created')
-      form.resetFields()
-      setImageFile(null)
-      setImagePreview(undefined)
-      setImageError(false)
+      toast.success('Product updated')
       onClose()
       queryClient.invalidateQueries({ queryKey: ['products'] })
     },
     onError: () => {
-      toast.error('Failed to create product')
+      toast.error('Failed to update product')
     },
   })
 
-  const handleCancel = () => {
-    form.resetFields()
-    setImageFile(null)
-    setImagePreview(undefined)
-    setImageError(false)
-    onClose()
-  }
-
-  const handleFinish = (values: Record<string, unknown>) => {
-    if (!imageFile) {
-      setImageError(true)
-      return
-    }
-    mutate(values)
-  }
+  if (!product) return null
 
   return (
     <CustomModal
-      title="Add Product"
+      title="Product Detail"
       open={open}
       onOk={() => form.submit()}
-      onCancel={handleCancel}
+      onCancel={onClose}
       confirmLoading={isPending}
       width={600}
     >
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleFinish}
-        style={{ marginTop: 16 }}
-      >
+      <Descriptions column={1} size="small" style={{ marginBottom: 16 }}>
+        <Descriptions.Item label="ID">{product.id}</Descriptions.Item>
+        <Descriptions.Item label="Created">
+          {new Date(product.createdAt).toLocaleString('vi-VN')}
+        </Descriptions.Item>
+      </Descriptions>
+
+      <Form form={form} layout="vertical" onFinish={(values) => mutate(values)}>
         <div style={{ marginBottom: 16 }}>
           <CustomUploadAvatar
             editing
             size={100}
-            label={
-              <>
-                Image <span style={{ color: '#ff4d4f' }}>*</span>
-              </>
-            }
+            label="Image"
             src={imagePreview}
             onChange={handleImageChange}
             onRemove={imagePreview ? handleImageRemove : undefined}
             maxMb={5}
           />
-          {imageError && (
-            <div style={{ color: '#ff4d4f', fontSize: 12, marginTop: 4 }}>
-              Please upload an image
-            </div>
-          )}
         </div>
         <CustomInput
           name="name"
@@ -160,7 +152,7 @@ export default function AddProduct({ open, onClose }: AddProductProps) {
           <CustomInput name="nibType" label="Nib Type" placeholder="e.g. Fine, Medium" />
           <CustomInput name="inkType" label="Ink Type" placeholder="e.g. Cartridge, Converter" />
         </div>
-        <Form.Item name="isActive" label="Active" valuePropName="checked" initialValue={true}>
+        <Form.Item name="isActive" label="Active" valuePropName="checked">
           <Switch />
         </Form.Item>
       </Form>

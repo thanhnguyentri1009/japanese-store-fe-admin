@@ -1,14 +1,19 @@
 import { useState } from 'react'
-import { Button, Image, Table, Tag, Typography } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
+import { Button, Image, Popconfirm, Space, Table, Tag, Typography } from 'antd'
+import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'react-toastify'
 import type { TableProps } from 'antd'
 import type { Product } from '../../types/product'
 import { apiUrls } from '../../commons/constants/apiIUrl'
 import useTableFetchList from '../../hooks/useTableFetchList'
+import { formatMoney } from '../../utils/formatMoney'
+import { deleteProduct } from '../../services/product/ProductService'
 import AddProduct from './Modal/AddProduct'
+import ProductDetailModal from './Modal/ProductDetailModal'
 import SearchProducts from './components/SearchProducts'
 
-const columns: TableProps<Product>['columns'] = [
+const baseColumns: TableProps<Product>['columns'] = [
   { title: 'ID', dataIndex: 'id' },
   {
     title: 'Image',
@@ -36,7 +41,7 @@ const columns: TableProps<Product>['columns'] = [
   {
     title: 'Price',
     dataIndex: 'price',
-    render: (v: number) => `₫${v.toLocaleString('vi-VN')}`,
+    render: (v: number) => formatMoney(v),
   },
   {
     title: 'Stock',
@@ -62,13 +67,49 @@ const columns: TableProps<Product>['columns'] = [
 
 export default function Products() {
   const [open, setOpen] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [params, setParams] = useState({})
+  const queryClient = useQueryClient()
 
   const { tableData, isLoading, pagination } = useTableFetchList<Product>({
     queryKey: ['products'],
     url: apiUrls.products.list,
     params,
   })
+
+  const { mutate: removeProduct } = useMutation({
+    mutationFn: deleteProduct,
+    onSuccess: () => {
+      toast.success('Product deleted')
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+    },
+    onError: () => {
+      toast.error('Failed to delete product')
+    },
+  })
+
+  const columns: TableProps<Product>['columns'] = [
+    ...baseColumns!,
+    {
+      title: 'Actions',
+      key: 'actions',
+      width: 100,
+      render: (_, record) => (
+        <Space>
+          <Button type="text" icon={<EditOutlined />} onClick={() => setSelectedProduct(record)} />
+          <Popconfirm
+            title="Delete this product?"
+            okText="Delete"
+            cancelText="Cancel"
+            okButtonProps={{ danger: true }}
+            onConfirm={() => removeProduct(record.id)}
+          >
+            <Button type="text" danger icon={<DeleteOutlined />} />
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ]
 
   return (
     <>
@@ -99,6 +140,11 @@ export default function Products() {
       />
 
       <AddProduct open={open} onClose={() => setOpen(false)} />
+      <ProductDetailModal
+        open={!!selectedProduct}
+        product={selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+      />
     </>
   )
 }

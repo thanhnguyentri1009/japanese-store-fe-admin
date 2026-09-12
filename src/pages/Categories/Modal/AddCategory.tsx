@@ -1,8 +1,8 @@
 import { Form } from 'antd'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
-import CustomModal from '../../../commons/components/CustomModal'
-import CustomInput from '../../../commons/components/CustomInput'
+import CustomModal from '../../../commons/components/CustomModal/CustomModal'
+import CustomInput from '../../../commons/components/CustomInput/CustomInput'
 import { createCategory } from '../../../services/category/CategoryService'
 
 interface AddCategoryProps {

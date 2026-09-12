@@ -1,11 +1,15 @@
 import { useState } from 'react'
-import { Button, Table, Tag, Typography } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
+import { Button, Popconfirm, Space, Table, Tag, Typography } from 'antd'
+import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'react-toastify'
 import type { TableProps } from 'antd'
 import type { Order, OrderStatus } from '../../types/order'
 import { apiUrls } from '../../commons/constants/apiIUrl'
 import useTableFetchList from '../../hooks/useTableFetchList'
 import SearchOrders from './components/SearchOrders'
+import { formatMoney } from '../../utils/formatMoney'
+import { deleteOrder } from '../../services/order/OrderService'
 import AddOrder from './Modal/AddOrder'
 import OrderDetailModal from './Modal/OrderDetailModal'
 
@@ -17,59 +21,90 @@ const statusConfig: Record<OrderStatus, { label: string; color: string }> = {
   cancelled: { label: 'Cancelled', color: 'red' },
 }
 
-const columns: TableProps<Order>['columns'] = [
-  {
-    title: 'Order ID',
-    dataIndex: 'id',
-    render: (v: string) => v.slice(0, 8).toUpperCase(),
-  },
-  {
-    title: 'Status',
-    dataIndex: 'status',
-    render: (v: OrderStatus) => {
-      const cfg = statusConfig[v] ?? { label: v, color: 'default' }
-      return <Tag color={cfg.color}>{cfg.label}</Tag>
-    },
-  },
-  {
-    title: 'Total',
-    dataIndex: 'totalAmount',
-    render: (v?: number) => (v != null ? `₫${v.toLocaleString('vi-VN')}` : '-'),
-  },
-  {
-    title: 'Items',
-    dataIndex: 'items',
-    render: (items: Order['items']) => items.length,
-  },
-  {
-    title: 'Payment',
-    render: (_, record) => {
-      const p = record.payment
-      if (!p) return '-'
-      return (
-        <Tag color={p.status === 'paid' ? 'green' : p.status === 'failed' ? 'red' : 'gold'}>
-          {p.status ?? '-'}
-        </Tag>
-      )
-    },
-  },
-  {
-    title: 'Date',
-    dataIndex: 'orderedAt',
-    render: (v: string) => new Date(v).toLocaleDateString('vi-VN'),
-  },
-]
-
 export default function Orders() {
   const [openAdd, setOpenAdd] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [params, setParams] = useState({})
+  const queryClient = useQueryClient()
 
   const { tableData, isLoading, pagination } = useTableFetchList<Order>({
     queryKey: ['orders'],
     url: apiUrls.orders.list,
     params,
   })
+
+  const { mutate: removeOrder } = useMutation({
+    mutationFn: deleteOrder,
+    onSuccess: () => {
+      toast.success('Order deleted')
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
+    },
+    onError: () => {
+      toast.error('Failed to delete order')
+    },
+  })
+
+  const columns: TableProps<Order>['columns'] = [
+    {
+      title: 'Order ID',
+      dataIndex: 'id',
+      render: (v: string) => v.slice(0, 8).toUpperCase(),
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      render: (v: OrderStatus) => {
+        const cfg = statusConfig[v] ?? { label: v, color: 'default' }
+        return <Tag color={cfg.color}>{cfg.label}</Tag>
+      },
+    },
+    {
+      title: 'Total',
+      dataIndex: 'totalAmount',
+      render: (v?: number) => (v != null ? formatMoney(v) : '-'),
+    },
+    {
+      title: 'Items',
+      dataIndex: 'items',
+      render: (items: Order['items']) => items.length,
+    },
+    {
+      title: 'Payment',
+      render: (_, record) => {
+        const p = record.payment
+        if (!p) return '-'
+        return (
+          <Tag color={p.status === 'paid' ? 'green' : p.status === 'failed' ? 'red' : 'gold'}>
+            {p.status ?? '-'}
+          </Tag>
+        )
+      },
+    },
+    {
+      title: 'Date',
+      dataIndex: 'orderedAt',
+      render: (v: string) => new Date(v).toLocaleDateString('vi-VN'),
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      width: 100,
+      render: (_, record) => (
+        <Space>
+          <Button type="text" icon={<EditOutlined />} onClick={() => setSelectedOrder(record)} />
+          <Popconfirm
+            title="Delete this order?"
+            okText="Delete"
+            cancelText="Cancel"
+            okButtonProps={{ danger: true }}
+            onConfirm={() => removeOrder(record.id)}
+          >
+            <Button type="text" danger icon={<DeleteOutlined />} />
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ]
 
   return (
     <>
@@ -97,10 +132,6 @@ export default function Orders() {
         rowKey="id"
         loading={isLoading}
         pagination={pagination}
-        onRow={(record) => ({
-          onClick: () => setSelectedOrder(record),
-          style: { cursor: 'pointer' },
-        })}
       />
 
       <AddOrder open={openAdd} onClose={() => setOpenAdd(false)} />

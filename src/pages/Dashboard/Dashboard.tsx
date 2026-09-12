@@ -5,9 +5,10 @@ import {
   TeamOutlined,
   DollarOutlined,
 } from '@ant-design/icons'
+import { formatMoney } from '../../utils/formatMoney'
 
 const stats = [
-  { title: 'Total Revenue', value: 125000000, prefix: '₫', icon: <DollarOutlined />, color: '#1890ff' },
+  { title: 'Total Revenue', value: 125000000, currency: 'VND' as const, icon: <DollarOutlined />, color: '#1890ff' },
   { title: 'Orders', value: 1280, icon: <ShoppingCartOutlined />, color: '#52c41a' },
   { title: 'Products', value: 340, icon: <AppstoreOutlined />, color: '#faad14' },
   { title: 'Users', value: 5200, icon: <TeamOutlined />, color: '#f5222d' },
@@ -26,9 +27,9 @@ export default function Dashboard() {
               <Statistic
                 title={s.title}
                 value={s.value}
-                prefix={s.prefix ?? s.icon}
+                prefix={s.icon}
                 valueStyle={{ color: s.color }}
-                formatter={s.prefix ? (v) => `${Number(v).toLocaleString('en-US')}` : undefined}
+                formatter={s.currency ? (v) => formatMoney(Number(v), s.currency) : undefined}
               />
             </Card>
           </Col>

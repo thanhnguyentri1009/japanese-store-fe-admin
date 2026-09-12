@@ -1,27 +1,67 @@
 import { useState } from 'react'
-import { Button, Table, Typography } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
+import { Button, Popconfirm, Space, Table, Typography } from 'antd'
+import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'react-toastify'
 import type { TableProps } from 'antd'
 import type { Category } from '../../types/category'
 import { apiUrls } from '../../commons/constants/apiIUrl'
 import useTableFetchList from '../../hooks/useTableFetchList'
+import { deleteCategory } from '../../services/category/CategoryService'
 import AddCategory from './Modal/AddCategory'
+import CategoryDetailModal from './Modal/CategoryDetailModal'
 import SearchCategories from './components/SearchCategories'
-
-const columns: TableProps<Category>['columns'] = [
-  { title: 'ID', dataIndex: 'id' },
-  { title: 'Name', dataIndex: 'name' },
-]
 
 export default function Categories() {
   const [open, setOpen] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
   const [params, setParams] = useState({})
+  const queryClient = useQueryClient()
 
   const { tableData, isLoading, pagination } = useTableFetchList<Category>({
     queryKey: ['categories'],
     url: apiUrls.categories.list,
     params,
   })
+
+  const { mutate: removeCategory } = useMutation({
+    mutationFn: deleteCategory,
+    onSuccess: () => {
+      toast.success('Category deleted')
+      queryClient.invalidateQueries({ queryKey: ['categories'] })
+    },
+    onError: () => {
+      toast.error('Failed to delete category')
+    },
+  })
+
+  const columns: TableProps<Category>['columns'] = [
+    { title: 'ID', dataIndex: 'id' },
+    { title: 'Name', dataIndex: 'name' },
+    {
+      title: 'Actions',
+      key: 'actions',
+      width: 100,
+      render: (_, record) => (
+        <Space>
+          <Button
+            type="text"
+            icon={<EditOutlined />}
+            onClick={() => setSelectedCategory(record)}
+          />
+          <Popconfirm
+            title="Delete this category?"
+            okText="Delete"
+            cancelText="Cancel"
+            okButtonProps={{ danger: true }}
+            onConfirm={() => removeCategory(record.id)}
+          >
+            <Button type="text" danger icon={<DeleteOutlined />} />
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ]
 
   return (
     <>
@@ -43,6 +83,11 @@ export default function Categories() {
       />
 
       <AddCategory open={open} onClose={() => setOpen(false)} />
+      <CategoryDetailModal
+        open={!!selectedCategory}
+        category={selectedCategory}
+        onClose={() => setSelectedCategory(null)}
+      />
     </>
   )
 }
