@@ -2,14 +2,17 @@ import { Form, Select, Switch } from 'antd'
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
-import CustomModal from '../../../commons/components/CustomModal/CustomModal'
-import CustomInput from '../../../commons/components/CustomInput/CustomInput'
-import CustomUploadAvatar from '../../../commons/components/CustomUploadAvatar/CustomUploadAvatar'
-import { uploadAxios } from '../../../services/axios'
-import { apiUrls } from '../../../commons/constants/apiIUrl'
+
+import { createProduct } from '../../../services/product/ProductService'
+import { uploadImageToServer } from '../../../services/upload/UploadService'
 import { getCategories } from '../../../services/category/CategoryService'
 import { getBrands } from '../../../services/brand/BrandService'
-import type { Product } from '../../../types/product'
+import type { CreateProductRequest } from '../../../types/product'
+import CustomInput from '../../../commons/components/CustomInput/CustomInput'
+import CustomModal from '../../../commons/components/CustomModal/CustomModal'
+import CustomUploadAvatar from '../../../commons/components/CustomUploadAvatar/CustomUploadAvatar'
+
+type AddProductFormValues = Omit<CreateProductRequest, 'image'> & { image: File | string }
 
 interface AddProductProps {
   open: boolean
@@ -18,21 +21,8 @@ interface AddProductProps {
 
 export default function AddProduct({ open, onClose }: AddProductProps) {
   const [form] = Form.useForm()
-  const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | undefined>()
-  const [imageError, setImageError] = useState(false)
   const queryClient = useQueryClient()
-
-  const handleImageChange = (file: File) => {
-    setImageFile(file)
-    setImagePreview(URL.createObjectURL(file))
-    setImageError(false)
-  }
-
-  const handleImageRemove = () => {
-    setImageFile(null)
-    setImagePreview(undefined)
-  }
 
   const { data: categoriesData } = useQuery({
     queryKey: ['categories'],
@@ -44,22 +34,26 @@ export default function AddProduct({ open, onClose }: AddProductProps) {
     queryFn: () => getBrands(),
   })
 
+  const handleImageChange = (file: File) => {
+    form.setFieldValue('image', file)
+    setImagePreview(URL.createObjectURL(file))
+  }
+
+  const handleImageRemove = () => {
+    form.setFieldValue('image', undefined)
+    setImagePreview(undefined)
+  }
+
   const { mutate, isPending } = useMutation({
-    mutationFn: async (values: Record<string, unknown>) => {
-      const formData = new FormData()
-      if (imageFile) formData.append('image', imageFile)
-      Object.entries(values).forEach(([k, v]) => {
-        if (v != null) formData.append(k, String(v))
-      })
-      const res = await uploadAxios.post<Product>(apiUrls.products.create, formData)
-      return res.data
+    mutationFn: async (values: AddProductFormValues) => {
+      const imageUrl =
+        typeof values.image === 'string' ? values.image : await uploadImageToServer(values.image)
+      return createProduct({ ...values, image: imageUrl as string })
     },
     onSuccess: () => {
       toast.success('Product created')
       form.resetFields()
-      setImageFile(null)
       setImagePreview(undefined)
-      setImageError(false)
       onClose()
       queryClient.invalidateQueries({ queryKey: ['products'] })
     },
@@ -70,18 +64,8 @@ export default function AddProduct({ open, onClose }: AddProductProps) {
 
   const handleCancel = () => {
     form.resetFields()
-    setImageFile(null)
     setImagePreview(undefined)
-    setImageError(false)
     onClose()
-  }
-
-  const handleFinish = (values: Record<string, unknown>) => {
-    if (!imageFile) {
-      setImageError(true)
-      return
-    }
-    mutate(values)
   }
 
   return (
@@ -96,29 +80,24 @@ export default function AddProduct({ open, onClose }: AddProductProps) {
       <Form
         form={form}
         layout="vertical"
-        onFinish={handleFinish}
+        onFinish={(values) => mutate(values)}
         style={{ marginTop: 16 }}
       >
-        <div style={{ marginBottom: 16 }}>
+        <Form.Item
+          name="image"
+          rules={[{ required: true, message: 'Please upload an image' }]}
+          getValueProps={() => ({})}
+        >
           <CustomUploadAvatar
             editing
             size={100}
-            label={
-              <>
-                Image <span style={{ color: '#ff4d4f' }}>*</span>
-              </>
-            }
+            label="Image"
             src={imagePreview}
             onChange={handleImageChange}
             onRemove={imagePreview ? handleImageRemove : undefined}
             maxMb={5}
           />
-          {imageError && (
-            <div style={{ color: '#ff4d4f', fontSize: 12, marginTop: 4 }}>
-              Please upload an image
-            </div>
-          )}
-        </div>
+        </Form.Item>
         <CustomInput
           name="name"
           label="Name"

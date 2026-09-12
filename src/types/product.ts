@@ -31,7 +31,7 @@ export interface CreateProductRequest {
   price: number
   stock?: number
   isActive?: boolean
-  image?: File
+  image?: string
 }
 
 export interface UpdateProductRequest {
@@ -45,5 +45,5 @@ export interface UpdateProductRequest {
   price?: number
   stock?: number
   isActive?: boolean
-  image?: File
+  image?: string
 }

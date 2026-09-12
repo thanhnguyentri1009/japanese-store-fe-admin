@@ -5,11 +5,13 @@ import { toast } from 'react-toastify'
 import CustomModal from '../../../commons/components/CustomModal/CustomModal'
 import CustomInput from '../../../commons/components/CustomInput/CustomInput'
 import CustomUploadAvatar from '../../../commons/components/CustomUploadAvatar/CustomUploadAvatar'
-import { uploadAxios } from '../../../services/axios'
-import { apiUrls } from '../../../commons/constants/apiIUrl'
+import { updateProduct } from '../../../services/product/ProductService'
+import { uploadImageToServer } from '../../../services/upload/UploadService'
 import { getCategories } from '../../../services/category/CategoryService'
 import { getBrands } from '../../../services/brand/BrandService'
-import type { Product } from '../../../types/product'
+import type { Product, UpdateProductRequest } from '../../../types/product'
+
+type ProductDetailFormValues = Omit<UpdateProductRequest, 'image'> & { image: File | string }
 
 interface ProductDetailModalProps {
   open: boolean
@@ -19,17 +21,16 @@ interface ProductDetailModalProps {
 
 export default function ProductDetailModal({ open, product, onClose }: ProductDetailModalProps) {
   const [form] = Form.useForm()
-  const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | undefined>()
   const queryClient = useQueryClient()
 
   const handleImageChange = (file: File) => {
-    setImageFile(file)
+    form.setFieldValue('image', file)
     setImagePreview(URL.createObjectURL(file))
   }
 
   const handleImageRemove = () => {
-    setImageFile(null)
+    form.setFieldValue('image', undefined)
     setImagePreview(undefined)
   }
 
@@ -55,21 +56,17 @@ export default function ProductDetailModal({ open, product, onClose }: ProductDe
         nibType: product.detail?.nibType,
         inkType: product.detail?.inkType,
         isActive: product.detail?.isActive ?? true,
+        image: product.image,
       })
-      setImageFile(null)
       setImagePreview(product.image)
     }
   }, [product, form])
 
   const { mutate, isPending } = useMutation({
-    mutationFn: async (values: Record<string, unknown>) => {
-      const formData = new FormData()
-      if (imageFile) formData.append('image', imageFile)
-      Object.entries(values).forEach(([k, v]) => {
-        if (v != null) formData.append(k, String(v))
-      })
-      const res = await uploadAxios.patch<Product>(apiUrls.products.update(product!.id), formData)
-      return res.data
+    mutationFn: async (values: ProductDetailFormValues) => {
+      const imageUrl =
+        typeof values.image === 'string' ? values.image : await uploadImageToServer(values.image)
+      return updateProduct(product!.id, { ...values, image: imageUrl as string })
     },
     onSuccess: () => {
       toast.success('Product updated')
@@ -100,7 +97,7 @@ export default function ProductDetailModal({ open, product, onClose }: ProductDe
       </Descriptions>
 
       <Form form={form} layout="vertical" onFinish={(values) => mutate(values)}>
-        <div style={{ marginBottom: 16 }}>
+        <Form.Item name="image" style={{ marginBottom: 16 }} getValueProps={() => ({})}>
           <CustomUploadAvatar
             editing
             size={100}
@@ -110,7 +107,7 @@ export default function ProductDetailModal({ open, product, onClose }: ProductDe
             onRemove={imagePreview ? handleImageRemove : undefined}
             maxMb={5}
           />
-        </div>
+        </Form.Item>
         <CustomInput
           name="name"
           label="Name"

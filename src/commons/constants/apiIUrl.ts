@@ -93,4 +93,8 @@ export const apiUrls = {
     delete: (id: string) => `/payments/${id}`,
     byOrder: (orderId: string) => `/payments/order/${orderId}`,
   },
+
+  upload: {
+    image: '/upload/image', // mock endpoint, backend not implemented yet
+  },
 }
