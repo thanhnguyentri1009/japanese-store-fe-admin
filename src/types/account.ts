@@ -2,7 +2,7 @@ export interface Account {
   id: string
   username: string
   email: string
-  role?: { id: string; name: string }
+  role: { id: string; name: string } | null
 }
 
 export interface CreateAccountRequest {

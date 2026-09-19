@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import CustomModal from '../../../commons/components/CustomModal/CustomModal'
 import CustomInput from '../../../commons/components/CustomInput/CustomInput'
-import CustomUploadAvatar from '../../../commons/components/CustomUploadAvatar/CustomUploadAvatar'
+import CustomUploadImage from '../../../commons/components/CustomUploadImage/CustomUploadImage'
 import { updateProduct } from '../../../services/product/ProductService'
 import { uploadImageToServer } from '../../../services/upload/UploadService'
 import { getCategories } from '../../../services/category/CategoryService'
@@ -53,6 +53,7 @@ export default function ProductDetailModal({ open, product, onClose }: ProductDe
         price: product.price,
         stock: product.detail?.stock,
         series: product.series,
+        colorCount: product.detail?.colorCount,
         nibType: product.detail?.nibType,
         inkType: product.detail?.inkType,
         isActive: product.detail?.isActive ?? true,
@@ -66,7 +67,7 @@ export default function ProductDetailModal({ open, product, onClose }: ProductDe
     mutationFn: async (values: ProductDetailFormValues) => {
       const imageUrl =
         typeof values.image === 'string' ? values.image : await uploadImageToServer(values.image)
-      return updateProduct(product!.id, { ...values, image: imageUrl as string })
+      return updateProduct(product!.id, { ...values, image: imageUrl })
     },
     onSuccess: () => {
       toast.success('Product updated')
@@ -98,14 +99,13 @@ export default function ProductDetailModal({ open, product, onClose }: ProductDe
 
       <Form form={form} layout="vertical" onFinish={(values) => mutate(values)}>
         <Form.Item name="image" style={{ marginBottom: 16 }} getValueProps={() => ({})}>
-          <CustomUploadAvatar
+          <CustomUploadImage
             editing
             size={100}
             label="Image"
             src={imagePreview}
             onChange={handleImageChange}
             onRemove={imagePreview ? handleImageRemove : undefined}
-            maxMb={5}
           />
         </Form.Item>
         <CustomInput

@@ -10,7 +10,7 @@ import { getBrands } from '../../../services/brand/BrandService'
 import type { CreateProductRequest } from '../../../types/product'
 import CustomInput from '../../../commons/components/CustomInput/CustomInput'
 import CustomModal from '../../../commons/components/CustomModal/CustomModal'
-import CustomUploadAvatar from '../../../commons/components/CustomUploadAvatar/CustomUploadAvatar'
+import CustomUploadImage from '../../../commons/components/CustomUploadImage/CustomUploadImage'
 
 type AddProductFormValues = Omit<CreateProductRequest, 'image'> & { image: File | string }
 
@@ -48,7 +48,7 @@ export default function AddProduct({ open, onClose }: AddProductProps) {
     mutationFn: async (values: AddProductFormValues) => {
       const imageUrl =
         typeof values.image === 'string' ? values.image : await uploadImageToServer(values.image)
-      return createProduct({ ...values, image: imageUrl as string })
+      return createProduct({ ...values, image: imageUrl })
     },
     onSuccess: () => {
       toast.success('Product created')
@@ -88,14 +88,13 @@ export default function AddProduct({ open, onClose }: AddProductProps) {
           rules={[{ required: true, message: 'Please upload an image' }]}
           getValueProps={() => ({})}
         >
-          <CustomUploadAvatar
+          <CustomUploadImage
             editing
             size={100}
             label="Image"
             src={imagePreview}
             onChange={handleImageChange}
             onRemove={imagePreview ? handleImageRemove : undefined}
-            maxMb={5}
           />
         </Form.Item>
         <CustomInput

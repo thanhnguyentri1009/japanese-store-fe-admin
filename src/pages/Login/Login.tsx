@@ -3,23 +3,10 @@ import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { login } from '../../services/login/LoginService'
-import type { JwtPayload, LoginRequest } from '../../types/login'
-import { TOKEN_KEY } from '../../commons/constants'
+import type { LoginRequest } from '../../types/login'
+import { setAccessToken } from '../../services/axios'
+import { decodeJwt, isAdminRole } from '../../utils/auth'
 import { LOCAL_STORAGE_KEYS, localStorageService } from '../../utils/localStorage'
-
-const decodeJwt = (token: string): JwtPayload | null => {
-  try {
-    const payload = token.split('.')[1]
-    return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
-  } catch {
-    return null
-  }
-}
-
-const getRoleName = (role: JwtPayload['role']): string => {
-  if (typeof role === 'string') return role
-  return role?.name ?? ''
-}
 
 export default function Login() {
   const navigate = useNavigate()
@@ -34,12 +21,12 @@ export default function Login() {
     onSuccess: (data) => {
       const payload = decodeJwt(data.access_token)
 
-      if (!payload || getRoleName(payload.role).toLowerCase() !== 'admin') {
+      if (!payload || !isAdminRole(payload.role)) {
         setPasswordError('You do not have permission to access this page.')
         return
       }
 
-      localStorageService.setItem(TOKEN_KEY, data.access_token)
+      setAccessToken(data.access_token)
       localStorageService.setItem(LOCAL_STORAGE_KEYS.user, JSON.stringify(payload))
       navigate('/dashboard')
     },

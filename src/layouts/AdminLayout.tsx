@@ -19,6 +19,10 @@ import {
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import type { ReactNode } from 'react'
+import { logout } from '../services/login/LoginService'
+import { clearAccessToken } from '../services/axios'
+import { localStorageService, LOCAL_STORAGE_KEYS } from '../utils/localStorage'
+import { routers } from '../commons/constants/routers'
 
 const { Header, Sider, Content } = Layout
 
@@ -69,6 +73,19 @@ export default function AdminLayout({ children }: Props) {
   const navigate = useNavigate()
   const location = useLocation()
   const { token } = theme.useToken()
+
+  const handleUserMenuClick: MenuProps['onClick'] = async ({ key }) => {
+    if (key !== 'logout') return
+    try {
+      await logout()
+    } catch {
+      // Best-effort: even if the server call fails, still end the local session below.
+    } finally {
+      clearAccessToken()
+      localStorageService.removeItem(LOCAL_STORAGE_KEYS.user)
+      navigate(routers.LOGIN)
+    }
+  }
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -123,7 +140,10 @@ export default function AdminLayout({ children }: Props) {
             {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
           </span>
 
-          <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+          <Dropdown
+            menu={{ items: userMenuItems, onClick: handleUserMenuClick }}
+            placement="bottomRight"
+          >
             <Space style={{ cursor: 'pointer' }}>
               <Avatar icon={<UserOutlined />} style={{ backgroundColor: token.colorPrimary }} />
               <Typography.Text>Admin</Typography.Text>

@@ -4,9 +4,11 @@ import type { UploadChangeParam } from 'antd/es/upload'
 import type { UploadFile } from 'antd/es/upload/interface'
 import { useState } from 'react'
 import type { ReactNode } from 'react'
-import './CustomUploadAvatar.scss'
+import './CustomUploadImage.scss'
 
-interface CustomUploadAvatarProps {
+const ACCEPTED_MIME_TYPES = ['image/png', 'image/jpeg']
+
+interface CustomUploadImageProps {
   src?: string
   initials?: string
   editing?: boolean
@@ -14,11 +16,12 @@ interface CustomUploadAvatarProps {
   size?: number
   maxMb?: number
   sizeErrorText?: string
+  typeErrorText?: string
   label?: ReactNode
   onRemove?: () => void
 }
 
-const CustomUploadAvatar = ({
+const CustomUploadImage = ({
   src,
   initials = '?',
   editing = false,
@@ -26,15 +29,26 @@ const CustomUploadAvatar = ({
   size = 80,
   maxMb = 2,
   sizeErrorText,
+  typeErrorText,
   label,
   onRemove,
-}: CustomUploadAvatarProps) => {
+}: CustomUploadImageProps) => {
   const [error, setError] = useState<string | null>(null)
 
-  const avatarStyle = { backgroundColor: '#12233d', fontSize: size * 0.35, fontWeight: 600, borderRadius: '10%', border: 'none' }
+  const avatarStyle = {
+    backgroundColor: '#12233d',
+    fontSize: size * 0.35,
+    fontWeight: 600,
+    borderRadius: '10%',
+    border: 'none',
+  }
 
   const handleChange = ({ file }: UploadChangeParam<UploadFile>) => {
     const raw = (file.originFileObj ?? file) as File
+    if (!ACCEPTED_MIME_TYPES.includes(raw.type)) {
+      setError(typeErrorText ?? 'Only PNG or JPG files are allowed')
+      return
+    }
     if (raw.size > maxMb * 1024 * 1024) {
       setError(sizeErrorText ?? `Max file size is ${maxMb}MB`)
       return
@@ -43,14 +57,19 @@ const CustomUploadAvatar = ({
     onChange?.(raw)
   }
 
-  const labelEl = label ? <span className="custom-upload-avatar__label">{label}</span> : null
+  const labelEl = label ? <span className="custom-upload-image__label">{label}</span> : null
 
   if (editing) {
     return (
-      <div className="custom-upload-avatar">
+      <div className="custom-upload-image">
         {labelEl}
-        <Upload showUploadList={false} beforeUpload={() => false} accept="image/*" onChange={handleChange}>
-          <div className="custom-upload-avatar__trigger">
+        <Upload
+          showUploadList={false}
+          beforeUpload={() => false}
+          accept={ACCEPTED_MIME_TYPES.join(',')}
+          onChange={handleChange}
+        >
+          <div className="custom-upload-image__trigger">
             <Avatar
               size={size}
               src={src}
@@ -59,13 +78,17 @@ const CustomUploadAvatar = ({
                   ? { ...avatarStyle, backgroundColor: 'transparent' }
                   : { ...avatarStyle, backgroundColor: '#fff', border: '1.5px solid #c8d6e5' }
               }
-              icon={!src ? <UploadOutlined style={{ fontSize: size * 0.25, color: '#8c8c8c' }} /> : undefined}
+              icon={
+                !src ? (
+                  <UploadOutlined style={{ fontSize: size * 0.25, color: '#8c8c8c' }} />
+                ) : undefined
+              }
             >
               {src ? initials : null}
             </Avatar>
             {onRemove ? (
               <div
-                className="custom-upload-avatar__overlay custom-upload-avatar__overlay--remove"
+                className="custom-upload-image__overlay custom-upload-image__overlay--remove"
                 onClick={(e) => {
                   e.stopPropagation()
                   onRemove()
@@ -74,22 +97,22 @@ const CustomUploadAvatar = ({
                 <CloseOutlined />
               </div>
             ) : (
-              <div className="custom-upload-avatar__overlay">
+              <div className="custom-upload-image__overlay">
                 <CameraOutlined />
               </div>
             )}
           </div>
         </Upload>
-        {error && <span className="custom-upload-avatar__error">{error}</span>}
+        {error && <span className="custom-upload-image__error">{error}</span>}
       </div>
     )
   }
 
   if (src) {
     return (
-      <div className="custom-upload-avatar">
+      <div className="custom-upload-image">
         {labelEl}
-        <div className="custom-upload-avatar__preview" style={{ width: size, height: size }}>
+        <div className="custom-upload-image__preview" style={{ width: size, height: size }}>
           <Image src={src} width={size} height={size} style={{ objectFit: 'cover' }} />
         </div>
       </div>
@@ -97,7 +120,7 @@ const CustomUploadAvatar = ({
   }
 
   return (
-    <div className="custom-upload-avatar">
+    <div className="custom-upload-image">
       {labelEl}
       <Avatar size={size} style={avatarStyle}>
         {initials}
@@ -106,4 +129,4 @@ const CustomUploadAvatar = ({
   )
 }
 
-export default CustomUploadAvatar
+export default CustomUploadImage

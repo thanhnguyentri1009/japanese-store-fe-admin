@@ -10,7 +10,6 @@ interface UseTableFetchListParams<T>
   queryKey: string[]
   url: string
   params?: Record<string, unknown>
-  returnFieldKey?: string
   enabled?: boolean
   minuteStaleTime?: number
   dataHandler?: (data: { items: T[]; total: number }) => { items: T[]; total: number }
@@ -36,7 +35,6 @@ const normalizeBooleanValue = (value: unknown) => {
 function useTableFetchList<T = unknown>({
   url,
   params,
-  returnFieldKey = 'data',
   enabled = true,
   minuteStaleTime = 1,
   queryKey,
@@ -119,9 +117,8 @@ function useTableFetchList<T = unknown>({
     const { data } = await defaultAxios.get(url, {
       params: { ...cleanParams(filterParams), page: currentPage, perPage: pageSize },
     })
-    const meta = data[returnFieldKey] ?? data.data ?? data
-    const items: T[] = meta[returnFieldKey] ?? meta ?? []
-    const total: number = meta.total ?? items.length ?? 0
+    const items: T[] = data?.items ?? []
+    const total: number = data?.total ?? items.length
     return { items, total }
   }
 

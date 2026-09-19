@@ -1,5 +1,3 @@
-export const TOKEN_KEY = 'access_token'
-
 export const NOT_FOUND = 'Not Found'
 
 export const PAGE_SIZE = 10

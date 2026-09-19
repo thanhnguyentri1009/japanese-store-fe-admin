@@ -3,24 +3,17 @@ import { uploadAxios } from '../axios'
 import { apiUrls } from '../../commons/constants/apiIUrl'
 import type { UploadResult } from '../../types/upload'
 
-const uploadToEndpoint = async (files: File[], endpoint: string): Promise<UploadResult[]> => {
+export const uploadImageToServer = async (file: File): Promise<string> => {
   const formData = new FormData()
-  files.forEach((file) => formData.append('files', file))
+  formData.append('image', file)
 
   try {
-    const res = await uploadAxios.post<{ data: UploadResult[] }>(endpoint, formData)
-    if (!res.data?.data) throw new Error('Upload failed')
-    return res.data.data
+    const res = await uploadAxios.post<UploadResult>(apiUrls.upload.image, formData)
+    if (!res.data?.url) throw new Error('Upload failed')
+    return res.data.url
   } catch (err) {
     const error = (err as AxiosError<{ message?: string }>)?.response?.data
     const message = typeof error?.message === 'string' ? error.message : 'Upload failed'
     throw new Error(message)
   }
-}
-
-export const uploadImageToServer = async (files: File | File[]): Promise<string | string[]> => {
-  const fileArray = Array.isArray(files) ? files : [files]
-  const results = await uploadToEndpoint(fileArray, apiUrls.upload.image)
-  const urls = results.map((item) => item.url)
-  return Array.isArray(files) ? urls : urls[0]
 }

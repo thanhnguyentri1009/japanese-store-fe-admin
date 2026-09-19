@@ -1,14 +1,11 @@
 import defaultAxios from '../axios'
 import type { Product, CreateProductRequest, UpdateProductRequest } from '../../types/product'
-import type { ListParams } from '../../types/common'
+import type { ListParams, PaginatedResponse } from '../../types/common'
 import { apiUrls } from '../../commons/constants/apiIUrl'
 
-type ListResponse = Product[] | { data: Product[]; total?: number }
-
 export const getProducts = async (params?: ListParams): Promise<{ data: Product[]; total: number }> => {
-  const res = await defaultAxios.get<ListResponse>(apiUrls.products.list, { params })
-  if (Array.isArray(res.data)) return { data: res.data, total: res.data.length }
-  return { data: res.data?.data ?? [], total: res.data?.total ?? 0 }
+  const res = await defaultAxios.get<PaginatedResponse<Product>>(apiUrls.products.list, { params })
+  return { data: res.data?.items ?? [], total: res.data?.total ?? 0 }
 }
 
 export const getProductById = async (id: string): Promise<Product> => {

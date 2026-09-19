@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import type { ReactElement } from 'react'
 import { routers } from './commons/constants/routers'
 import Dashboard from './pages/Dashboard/Dashboard'
@@ -39,12 +39,13 @@ export default function Routers() {
       <Routes>
         {/* Unauthorize routes */}
         <Route path={routers.LOGIN} element={<Login />} />
-        <Route path="*" element={<NotFound />} />
 
         {/* Authorize routes */}
+        <Route path="/" element={<Navigate to={routers.DASHBOARD} replace />} />
         {routes.map(({ key, path, element }) => (
           <Route key={key} path={path} element={element} />
         ))}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   )

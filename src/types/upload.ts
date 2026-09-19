@@ -1,12 +1,5 @@
 export interface UploadResult {
-  fileName: string
+  filename: string
   url: string
-  key: string
-  fileType: string
-  fileSize: number
-  status: string
-  fileId: string
-  createTime: string
-  updateTime: string
-  updatedBy: string | null
+  createdAt: string
 }

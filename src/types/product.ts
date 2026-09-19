@@ -1,6 +1,7 @@
 export interface ProductDetail {
   nibType?: string
   inkType?: string
+  colorCount?: number
   stock: number
   isActive: boolean
   descriptions?: string[]

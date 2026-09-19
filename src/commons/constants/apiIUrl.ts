@@ -3,6 +3,7 @@ export const apiUrls = {
     login: '/auth/login',
     register: '/auth/register',
     refresh: '/auth/refresh',
+    logout: '/auth/logout',
   },
 
   profile: {
@@ -95,6 +96,6 @@ export const apiUrls = {
   },
 
   upload: {
-    image: '/upload/image', // mock endpoint, backend not implemented yet
+    image: '/storage/upload',
   },
 }

@@ -1,12 +1,15 @@
 import { type FC, type ReactNode, useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { NOT_FOUND, titles, TOKEN_KEY } from './commons/constants'
-import { navigators, routers } from './commons/constants/routers'
+import { Navigate, useLocation } from 'react-router-dom'
+import { NOT_FOUND, titles } from './commons/constants'
+import { routers } from './commons/constants/routers'
 import AdminLayout from './layouts/AdminLayout'
 import LoginLayout from './layouts/LoginLayout'
 
 import { localStorageService, LOCAL_STORAGE_KEYS } from './utils/localStorage'
-import { isEmpty } from 'lodash'
+import { isAdminRole } from './utils/auth'
+import { useIsAuthenticated } from './hooks/useAuth'
+import { clearAccessToken } from './services/axios'
+import type { JwtPayload } from './types/login'
 
 const publicRoutes = [
   routers.LOGIN,
@@ -17,29 +20,53 @@ const publicRoutes = [
 
 const fullScreenRoutes = [routers.OTHER.NO_PERMISSION_AT_ALL]
 
+const getStoredUser = (): JwtPayload | null => {
+  const raw = localStorageService.getItem(LOCAL_STORAGE_KEYS.user)
+  if (!raw) return null
+  try {
+    return JSON.parse(raw) as JwtPayload
+  } catch {
+    return null
+  }
+}
+
 const AppContainer: FC<{ children: ReactNode }> = ({ children }) => {
   const { pathname } = useLocation()
-  const navigate = useNavigate()
+  const isAuthenticated = useIsAuthenticated()
+  const isPublicRoute = publicRoutes.includes(pathname)
+
+  // Re-derived on every render (i.e. on every navigation, since useLocation() re-renders on
+  // pathname change) instead of only once on mount — a stale token/role can't slip through by
+  // navigating client-side after the initial check.
+  const storedUser = isAuthenticated ? getStoredUser() : null
+  const hasAdminAccess = isAuthenticated && !!storedUser && isAdminRole(storedUser.role)
+  const isStaleSession = isAuthenticated && !hasAdminAccess
 
   useEffect(() => {
-    const user = localStorageService.getItem(LOCAL_STORAGE_KEYS.user)
-    const token = localStorageService.getItem(TOKEN_KEY)
-
-    if (isEmpty(token) && !publicRoutes.includes(pathname)) {
-      navigate(navigators.LOGIN)
+    if (isStaleSession) {
+      clearAccessToken()
+      localStorageService.removeItem(LOCAL_STORAGE_KEYS.user)
     }
-
-    if (!isEmpty(user) && publicRoutes.includes(pathname)) {
-      navigate(navigators.DASHBOARD)
-    }
-  }, [])
+  }, [isStaleSession])
 
   useEffect(() => {
     document.title =
       Object.entries(titles).find(([key]) => pathname.includes(key))?.[1] || NOT_FOUND
   }, [pathname])
 
-  if (publicRoutes.includes(pathname)) {
+  if (isStaleSession) {
+    return <Navigate to={routers.LOGIN} replace />
+  }
+
+  if (!isAuthenticated && !isPublicRoute) {
+    return <Navigate to={routers.LOGIN} replace />
+  }
+
+  if (hasAdminAccess && isPublicRoute) {
+    return <Navigate to={routers.DASHBOARD} replace />
+  }
+
+  if (isPublicRoute) {
     return <LoginLayout>{children}</LoginLayout>
   }
 
