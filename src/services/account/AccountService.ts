@@ -5,7 +5,7 @@ import { apiUrls } from '../../commons/constants/apiIUrl'
 
 export const getAccounts = async (params?: ListParams): Promise<{ data: Account[]; total: number }> => {
   const res = await defaultAxios.get<PaginatedResponse<Account>>(apiUrls.accounts.list, { params })
-  return { data: res.data?.items ?? [], total: res.data?.total ?? 0 }
+  return { data: res.data?.data ?? [], total: res.data?.total ?? 0 }
 }
 
 export const getAccountById = async (id: string): Promise<Account> => {

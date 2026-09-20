@@ -5,7 +5,7 @@ import { apiUrls } from '../../commons/constants/apiIUrl'
 
 export const getAddresses = async (params?: ListParams): Promise<{ data: Address[]; total: number }> => {
   const res = await defaultAxios.get<PaginatedResponse<Address>>(apiUrls.addresses.list, { params })
-  return { data: res.data?.items ?? [], total: res.data?.total ?? 0 }
+  return { data: res.data?.data ?? [], total: res.data?.total ?? 0 }
 }
 
 export const getAddressById = async (id: string): Promise<Address> => {

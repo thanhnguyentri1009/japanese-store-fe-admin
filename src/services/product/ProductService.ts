@@ -5,7 +5,7 @@ import { apiUrls } from '../../commons/constants/apiIUrl'
 
 export const getProducts = async (params?: ListParams): Promise<{ data: Product[]; total: number }> => {
   const res = await defaultAxios.get<PaginatedResponse<Product>>(apiUrls.products.list, { params })
-  return { data: res.data?.items ?? [], total: res.data?.total ?? 0 }
+  return { data: res.data?.data ?? [], total: res.data?.total ?? 0 }
 }
 
 export const getProductById = async (id: string): Promise<Product> => {

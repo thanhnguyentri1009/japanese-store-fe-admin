@@ -117,7 +117,7 @@ function useTableFetchList<T = unknown>({
     const { data } = await defaultAxios.get(url, {
       params: { ...cleanParams(filterParams), page: currentPage, perPage: pageSize },
     })
-    const items: T[] = data?.items ?? []
+    const items: T[] = data?.data ?? []
     const total: number = data?.total ?? items.length
     return { items, total }
   }

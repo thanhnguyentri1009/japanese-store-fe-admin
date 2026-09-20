@@ -7,7 +7,7 @@ export interface ListParams {
 }
 
 export interface PaginatedResponse<T> {
-  items: T[]
+  data: T[]
   total: number
   page: number
   perPage: number
