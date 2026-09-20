@@ -77,7 +77,7 @@ export default function Brands() {
         </Button>
       </div>
 
-      <SearchBrands onSearch={(search) => setParams({ search })} />
+      <SearchBrands onSearch={(searchText) => setParams({ searchText })} />
       <Table
         tableLayout="fixed"
         columns={columns}

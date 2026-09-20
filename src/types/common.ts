@@ -2,6 +2,7 @@ export interface ListParams {
   page?: number
   perPage?: number
   search?: string
+  searchText?: string
   [key: string]: unknown
 }
 

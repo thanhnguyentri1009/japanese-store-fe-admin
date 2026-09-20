@@ -53,7 +53,7 @@ export default function ProductDetailModal({ open, product, onClose }: ProductDe
         price: product.price,
         stock: product.detail?.stock,
         series: product.series,
-        colorCount: product.detail?.colorCount,
+        size: product.detail?.size,
         nibType: product.detail?.nibType,
         inkType: product.detail?.inkType,
         isActive: product.detail?.isActive ?? true,
@@ -140,11 +140,11 @@ export default function ProductDetailModal({ open, product, onClose }: ProductDe
           <CustomInput name="stock" label="Stock" type="number" min={0} placeholder="0" />
           <CustomInput name="series" label="Series" placeholder="e.g. Pilot Kakuno" />
           <CustomInput
-            name="colorCount"
-            label="Color Count"
+            name="size"
+            label="Size"
             type="number"
             min={0}
-            placeholder="0"
+            placeholder="e.g. 70"
           />
           <CustomInput name="nibType" label="Nib Type" placeholder="e.g. Fine, Medium" />
           <CustomInput name="inkType" label="Ink Type" placeholder="e.g. Cartridge, Converter" />

@@ -129,11 +129,11 @@ export default function AddProduct({ open, onClose }: AddProductProps) {
           <CustomInput name="stock" label="Stock" type="number" min={0} placeholder="0" />
           <CustomInput name="series" label="Series" placeholder="e.g. Pilot Kakuno" />
           <CustomInput
-            name="colorCount"
-            label="Color Count"
+            name="size"
+            label="Size"
             type="number"
             min={0}
-            placeholder="0"
+            placeholder="e.g. 70"
           />
           <CustomInput name="nibType" label="Nib Type" placeholder="e.g. Fine, Medium" />
           <CustomInput name="inkType" label="Ink Type" placeholder="e.g. Cartridge, Converter" />

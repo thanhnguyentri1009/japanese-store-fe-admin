@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Image, Popconfirm, Space, Table, Tag, Typography } from 'antd'
+import { Button, Image, InputNumber, Popconfirm, Space, Table, Tag, Typography } from 'antd'
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
@@ -68,7 +68,7 @@ const baseColumns: TableProps<Product>['columns'] = [
 export default function Products() {
   const [open, setOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
-  const [params, setParams] = useState({})
+  const [params, setParams] = useState<{ searchText?: string; size?: number }>({})
   const queryClient = useQueryClient()
 
   const { tableData, isLoading, pagination } = useTableFetchList<Product>({
@@ -129,7 +129,17 @@ export default function Products() {
         </Button>
       </div>
 
-      <SearchProducts onSearch={(search) => setParams({ search })} />
+      <Space style={{ marginBottom: 16 }}>
+        <SearchProducts
+          onSearch={(searchText) => setParams((prev) => ({ ...prev, searchText: searchText || undefined }))}
+        />
+        <InputNumber
+          placeholder="Filter by size"
+          min={0}
+          style={{ width: 160 }}
+          onChange={(size) => setParams((prev) => ({ ...prev, size: size ?? undefined }))}
+        />
+      </Space>
       <Table
         tableLayout="fixed"
         columns={columns}

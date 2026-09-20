@@ -13,13 +13,16 @@ export const getProductById = async (id: string): Promise<Product> => {
   return res.data
 }
 
-export const getProductsByCategory = async (categoryId: string): Promise<Product[]> => {
-  const res = await defaultAxios.get<Product[]>(apiUrls.products.byCategory(categoryId))
+export const getProductsByCategory = async (
+  categoryId: string,
+  params?: ListParams,
+): Promise<Product[]> => {
+  const res = await defaultAxios.get<Product[]>(apiUrls.products.byCategory(categoryId), { params })
   return res.data
 }
 
-export const getProductsByBrand = async (brandId: string): Promise<Product[]> => {
-  const res = await defaultAxios.get<Product[]>(apiUrls.products.byBrand(brandId))
+export const getProductsByBrand = async (brandId: string, params?: ListParams): Promise<Product[]> => {
+  const res = await defaultAxios.get<Product[]>(apiUrls.products.byBrand(brandId), { params })
   return res.data
 }
 

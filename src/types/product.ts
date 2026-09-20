@@ -1,7 +1,7 @@
 export interface ProductDetail {
   nibType?: string
   inkType?: string
-  colorCount?: number
+  size?: number
   stock: number
   isActive: boolean
   descriptions?: string[]
@@ -28,7 +28,7 @@ export interface CreateProductRequest {
   series?: string
   nibType?: string
   inkType?: string
-  colorCount?: number
+  size?: number
   price: number
   stock?: number
   isActive?: boolean
@@ -42,7 +42,7 @@ export interface UpdateProductRequest {
   series?: string
   nibType?: string
   inkType?: string
-  colorCount?: number
+  size?: number
   price?: number
   stock?: number
   isActive?: boolean

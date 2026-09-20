@@ -72,7 +72,7 @@ export default function Categories() {
         </Button>
       </div>
 
-      <SearchCategories onSearch={(search) => setParams({ search })} />
+      <SearchCategories onSearch={(searchText) => setParams({ searchText })} />
       <Table
         tableLayout="fixed"
         columns={columns}

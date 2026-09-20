@@ -74,7 +74,7 @@ export default function Accounts() {
         </Button>
       </div>
 
-      <SearchAccounts onSearch={(search) => setParams({ search })} />
+      <SearchAccounts onSearch={(searchText) => setParams({ searchText })} />
       <Table
         tableLayout="fixed"
         columns={columns}

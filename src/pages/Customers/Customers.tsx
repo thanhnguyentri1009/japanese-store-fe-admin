@@ -75,7 +75,7 @@ export default function Customers() {
         </Button>
       </div>
 
-      <SearchCustomers onSearch={(search) => setParams({ search })} />
+      <SearchCustomers onSearch={(searchText) => setParams({ searchText })} />
       <Table
         tableLayout="fixed"
         columns={columns}
