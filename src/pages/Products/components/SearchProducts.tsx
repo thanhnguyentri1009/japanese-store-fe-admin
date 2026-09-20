@@ -10,7 +10,7 @@ export default function SearchProducts({ onSearch }: SearchProductsProps) {
       type="search"
       placeholder="Search by name or series..."
       onChange={(e) => onSearch(e.target.value)}
-      style={{ marginBottom: 16, width: '33%' }}
+      style={{ width: 320, maxWidth: '100%' }}
     />
   )
 }

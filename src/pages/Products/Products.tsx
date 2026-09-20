@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Image, InputNumber, Popconfirm, Space, Table, Tag, Typography } from 'antd'
+import { Button, Image, Popconfirm, Space, Table, Tag, Typography } from 'antd'
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
@@ -9,6 +9,7 @@ import { apiUrls } from '../../commons/constants/apiIUrl'
 import useTableFetchList from '../../hooks/useTableFetchList'
 import { formatMoney } from '../../utils/formatMoney'
 import { deleteProduct } from '../../services/product/ProductService'
+import CustomInput from '../../commons/components/CustomInput/CustomInput'
 import AddProduct from './Modal/AddProduct'
 import ProductDetailModal from './Modal/ProductDetailModal'
 import SearchProducts from './components/SearchProducts'
@@ -129,17 +130,18 @@ export default function Products() {
         </Button>
       </div>
 
-      <Space style={{ marginBottom: 16 }}>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
         <SearchProducts
           onSearch={(searchText) => setParams((prev) => ({ ...prev, searchText: searchText || undefined }))}
         />
-        <InputNumber
+        <CustomInput
+          type="number"
           placeholder="Filter by size"
           min={0}
           style={{ width: 160 }}
-          onChange={(size) => setParams((prev) => ({ ...prev, size: size ?? undefined }))}
+          onNumberChange={(size) => setParams((prev) => ({ ...prev, size: size ?? undefined }))}
         />
-      </Space>
+      </div>
       <Table
         tableLayout="fixed"
         columns={columns}

@@ -1,4 +1,4 @@
-import { Button, Card, Form, Input, Typography } from 'antd'
+import { Button, Card, Form, Typography } from 'antd'
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
@@ -7,6 +7,7 @@ import type { LoginRequest } from '../../types/login'
 import { setAccessToken } from '../../services/axios'
 import { decodeJwt, isAdminRole } from '../../utils/auth'
 import { LOCAL_STORAGE_KEYS, localStorageService } from '../../utils/localStorage'
+import CustomInput from '../../commons/components/CustomInput/CustomInput'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -54,12 +55,21 @@ export default function Login() {
           JP Store Admin
         </Typography.Title>
         <Form form={form} layout="vertical" onFinish={onFinish}>
-          <Form.Item name="username" rules={[{ required: true, message: 'Please enter your username' }]}>
-            <Input prefix={<UserOutlined />} placeholder="Username" size="large" />
-          </Form.Item>
-          <Form.Item name="password" rules={[{ required: true, message: 'Please enter your password' }]}>
-            <Input.Password prefix={<LockOutlined />} placeholder="Password" size="large" />
-          </Form.Item>
+          <CustomInput
+            name="username"
+            rules={[{ required: true, message: 'Please enter your username' }]}
+            placeholder="Username"
+            prefix={<UserOutlined />}
+            size="large"
+          />
+          <CustomInput
+            name="password"
+            type="password"
+            rules={[{ required: true, message: 'Please enter your password' }]}
+            placeholder="Password"
+            prefix={<LockOutlined />}
+            size="large"
+          />
           <Form.Item style={{ marginBottom: 0 }}>
             <Button type="primary" htmlType="submit" block size="large" loading={isPending}>
               Login
