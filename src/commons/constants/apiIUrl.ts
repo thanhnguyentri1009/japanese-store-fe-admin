@@ -1,4 +1,12 @@
 export const apiUrls = {
+  dashboard: {
+    summary: '/dashboard/summary',
+  },
+
+  statistics: {
+    topSellingProducts: '/statistics/top-selling-products',
+  },
+
   auth: {
     login: '/auth/login',
     register: '/auth/register',
